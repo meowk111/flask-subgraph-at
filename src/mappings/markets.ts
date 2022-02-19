@@ -4,11 +4,11 @@
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts/index'
 import { Market, Comptroller } from '../types/schema'
 // PriceOracle is valid from Comptroller deployment until block 8498421
-import { PriceOracle } from '../types/cREP/PriceOracle'
+import { PriceOracle } from '../types/cDAI/PriceOracle'
 // PriceOracle2 is valid from 8498422 until present block (until another proxy upgrade)
-import { PriceOracle2 } from '../types/cREP/PriceOracle2'
-import { ERC20 } from '../types/cREP/ERC20'
-import { CToken } from '../types/cREP/CToken'
+import { PriceOracle2 } from '../types/cDAI/PriceOracle2'
+import { ERC20 } from '../types/cDAI/ERC20'
+import { CToken } from '../types/cDAI/CToken'
 
 import {
   exponentToBigDecimal,
@@ -22,6 +22,22 @@ let cUSDCAddress = '0x39aa39c021dfbae8fac545936693ac917d5e7563'
 let cETHAddress = '0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5'
 let daiAddress = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'
 
+function getOrInitComptroller(id: string): Comptroller {
+  let comptroller = Comptroller.load(id)
+  if (!comptroller) {
+    comptroller = new Comptroller(id)
+  }
+  return comptroller as Comptroller
+}
+
+function getOrInitMarket(id: string): Market {
+  let market = Market.load(id)
+  if (!market) {
+    market = new Market(id)
+  }
+  return market as Market
+}
+
 // Used for all cERC20 contracts
 function getTokenPrice(
   blockNumber: i32,
@@ -29,7 +45,7 @@ function getTokenPrice(
   underlyingAddress: Address,
   underlyingDecimals: i32,
 ): BigDecimal {
-  let comptroller = Comptroller.load('1')
+  let comptroller = getOrInitComptroller('1')
   let oracleAddress = comptroller.priceOracle as Address
   let underlyingPrice: BigDecimal
   let priceOracle1Address = Address.fromString('02557a5e05defeffd4cae6d83ea3d173b272c904')
@@ -78,7 +94,7 @@ function getTokenPrice(
 
 // Returns the price of USDC in eth. i.e. 0.005 would mean ETH is $200
 function getUSDCpriceETH(blockNumber: i32): BigDecimal {
-  let comptroller = Comptroller.load('1')
+  let comptroller = getOrInitComptroller('1')
   let oracleAddress = comptroller.priceOracle as Address
   let priceOracle1Address = Address.fromString('02557a5e05defeffd4cae6d83ea3d173b272c904')
   let USDCAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 '
@@ -168,7 +184,7 @@ export function updateMarket(
   blockTimestamp: i32,
 ): Market {
   let marketID = marketAddress.toHexString()
-  let market = Market.load(marketID)
+  let market = getOrInitMarket(marketID)
   if (market == null) {
     market = createMarket(marketID)
   }

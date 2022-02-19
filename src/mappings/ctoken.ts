@@ -9,7 +9,7 @@ import {
   AccrueInterest,
   NewReserveFactor,
   NewMarketInterestRateModel,
-} from '../types/cREP/CToken'
+} from '../types/cDAI/CToken'
 import { AccountCToken, Market, Account } from '../types/schema'
 
 import { createMarket, updateMarket } from './markets'
@@ -23,39 +23,12 @@ import {
   zeroBD,
 } from './helpers'
 
-/* Account supplies assets into market and receives cTokens in exchange
- *
- * event.mintAmount is the underlying asset
- * event.mintTokens is the amount of cTokens minted
- * event.minter is the account
- *
- * Notes
- *    Transfer event will always get emitted with this
- *    Mints originate from the cToken address, not 0x000000, which is typical of ERC-20s
- *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonCTokenStats, handleTransfer() will
- *    No need to update cTokenBalance, handleTransfer() will
- */
-export function handleMint(event: Mint): void {
-  // Currently not in use. Everything can be done in handleTransfer, since a Mint event
-  // is always done alongside a Transfer event, with the same data
-}
-
-/*  Account supplies cTokens into market and receives underlying asset in exchange
- *
- *  event.redeemAmount is the underlying asset
- *  event.redeemTokens is the cTokens
- *  event.redeemer is the account
- *
- *  Notes
- *    Transfer event will always get emitted with this
- *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonCTokenStats, handleTransfer() will
- *    No need to update cTokenBalance, handleTransfer() will
- */
-export function handleRedeem(event: Redeem): void {
-  // Currently not in use. Everything can be done in handleTransfer, since a Redeem event
-  // is always done alongside a Transfer event, with the same data
+function getOrInitMarket(id: string): Market {
+  let market = Market.load(id)
+  if (!market) {
+    market = new Market(id)
+  }
+  return market as Market
 }
 
 /* Borrow assets from the protocol. All values either ETH or ERC20
@@ -68,7 +41,8 @@ export function handleRedeem(event: Redeem): void {
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
  */
 export function handleBorrow(event: Borrow): void {
-  let market = Market.load(event.address.toHexString())
+  let market = getOrInitMarket(event.address.toHexString())
+
   let accountID = event.params.borrower.toHex()
 
   // Update cTokenStats common for all events, and return the stats to update unique
@@ -129,7 +103,7 @@ export function handleBorrow(event: Borrow): void {
  *    repay.
  */
 export function handleRepayBorrow(event: RepayBorrow): void {
-  let market = Market.load(event.address.toHexString())
+  let market = getOrInitMarket(event.address.toHexString())
   let accountID = event.params.borrower.toHex()
 
   // Update cTokenStats common for all events, and return the stats to update unique
@@ -222,7 +196,7 @@ export function handleTransfer(event: Transfer): void {
   // We only updateMarket() if accrual block number is not up to date. This will only happen
   // with normal transfers, since mint, redeem, and seize transfers will already run updateMarket()
   let marketID = event.address.toHexString()
-  let market = Market.load(marketID)
+  let market = getOrInitMarket(marketID)
   if (market.accrualBlockNumber != event.block.number.toI32()) {
     market = updateMarket(
       event.address,
@@ -326,7 +300,7 @@ export function handleAccrueInterest(event: AccrueInterest): void {
 
 export function handleNewReserveFactor(event: NewReserveFactor): void {
   let marketID = event.address.toHex()
-  let market = Market.load(marketID)
+  let market = getOrInitMarket(marketID)
   market.reserveFactor = event.params.newReserveFactorMantissa
   market.save()
 }
@@ -335,7 +309,7 @@ export function handleNewMarketInterestRateModel(
   event: NewMarketInterestRateModel,
 ): void {
   let marketID = event.address.toHex()
-  let market = Market.load(marketID)
+  let market = getOrInitMarket(marketID)
   if (market == null) {
     market = createMarket(marketID)
   }
