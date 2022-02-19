@@ -1,4 +1,5 @@
 # Compound-V2-subgraph
+
 [Compound](https://compound.finance/) is an open-source protocol for algorithmic, efficient Money Markets on the Ethereum blockchain. This Subgraph ingests the V2 contracts of the protocol. See [here](https://github.com/graphprotocol/compound-subgraph) for the V1 subgraph.
 
 ## Networks and Performance
@@ -23,15 +24,17 @@ These contracts were left out:
 
 ### ABI
 
-The ABI used is `ctoken.json`. It is a stripped down version of the full abi provided by compound, that satisfies the calls we need to make for both cETH and cERC20 contracts. This way we can use 1 ABI file, and one mapping for cETH and cERC20. 
+The ABI used is `ctoken.json`. It is a stripped down version of the full abi provided by compound, that satisfies the calls we need to make for both cETH and cERC20 contracts. This way we can use 1 ABI file, and one mapping for cETH and cERC20.
 
 ## Getting started with querying
+
 Below are a few ways to show how to query the Compound V2 Subgraph for data. The queries show most of the information that is queryable, but there are many other filtering options that can be used, just check out the [querying api](https://github.com/graphprotocol/graph-node/blob/master/docs/graphql-api.md).
 
 ### Querying All Markets
+
 ```graphql
 {
-  markets{
+  markets {
     id
     symbol
     accrualBlockNumber
@@ -51,18 +54,20 @@ Below are a few ways to show how to query the Compound V2 Subgraph for data. The
 ```
 
 ### Querying All Users, and all their CToken balances
+
 Commented out values are temporarily not being used.
-```graphql
+
+````graphql
 {
-  users{
+  users {
     id
     countLiquidated
     countLiquidator
-#    accountLiquidity
-#    availableToBorrowEth
-#    totalSupplyInEth
-#    totalBorrowInEth
-    cTokens{
+    #    accountLiquidity
+    #    availableToBorrowEth
+    #    totalSupplyInEth
+    #    totalBorrowInEth
+    cTokens {
       id
       user
       accrualBlockNumber
@@ -71,13 +76,13 @@ Commented out values are temporarily not being used.
       cTokenBalance
       underlyingSupplied
       underlyingRedeemed
-#      underlyingBalance
-#      interestEarned
+      #      underlyingBalance
+      #      interestEarned
       totalBorrowed
       totalRepaid
-#      borrowBalance
-#      borrowInterest
+      #      borrowBalance
+      #      borrowInterest
     }
   }
 }
-```
+````
